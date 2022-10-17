@@ -63,9 +63,15 @@ func run(ctx context.Context) error {
 }
 
 func setGeolocation(latitude, longitude float64) chromedp.Tasks {
+	d := browser.PermissionDescriptor{
+		Name: browser.PermissionTypeGeolocation.String(),
+	}
 	return chromedp.Tasks{
-		browser.SetPermission(&browser.PermissionDescriptor{Name: browser.PermissionTypeGeolocation.String()}, browser.PermissionSettingGranted),
-		emulation.SetGeolocationOverride().WithAccuracy(100).WithLatitude(latitude).WithLongitude(longitude),
+		browser.SetPermission(&d, browser.PermissionSettingGranted),
+		emulation.SetGeolocationOverride().
+			WithAccuracy(100).
+			WithLatitude(latitude).
+			WithLongitude(longitude),
 	}
 }
 
