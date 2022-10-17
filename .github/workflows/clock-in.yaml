@@ -1,0 +1,19 @@
+name: Clock In
+on:
+  # schedule:
+  #   - cron: "0 12 * * 1-5"
+  workflow_dispatch: {}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
+      with:
+        go-version: 1.19.1
+    - run: go run ./cmd/talentaclock clock-in
+      env:
+        TALENTA_EMAIL: ${{ secrets.TALENTA_EMAIL }}
+        TALENTA_PASSWORD: ${{ secrets.TALENTA_PASSWORD }}
+        LATITUDE: ${{ secrets.LATITUDE }}
+        LONGITUDE: ${{ secrets.LONGITUDE }}
