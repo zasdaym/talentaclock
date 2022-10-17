@@ -23,7 +23,7 @@ func main() {
 
 const talentaBaseURL = "https://hr.talenta.co"
 
-var errInvalidArgument = fmt.Errorf("expected one argument: clock-in or clock-out")
+var errInvalidArgument = fmt.Errorf("expected one argument: clock-in, clock-out, or check")
 
 func run(ctx context.Context) error {
 	cfg, err := parseConfig()
@@ -54,6 +54,7 @@ func run(ctx context.Context) error {
 		tasks = append(tasks, clockIn())
 	case "clock-out":
 		tasks = append(tasks, clockOut())
+	case "check":
 	default:
 		return errInvalidArgument
 	}
