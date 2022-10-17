@@ -8,6 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - uses: nanasess/setup-chromedriver@v1
+      with:
+        chromedriver-version: "106.0.5249.61"
     - uses: actions/setup-go@v3
       with:
         go-version: 1.19.1
