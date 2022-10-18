@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/chromedp/cdproto/browser"
 	"github.com/chromedp/cdproto/emulation"
@@ -23,7 +24,7 @@ func main() {
 
 const talentaBaseURL = "https://hr.talenta.co"
 
-var errInvalidArgument = fmt.Errorf("expected one argument: clock-in, clock-out, or check")
+var errInvalidArgument = fmt.Errorf("expected one argument: clock-in or clock-out")
 
 func run(ctx context.Context) error {
 	cfg, err := parseConfig()
@@ -31,7 +32,7 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("parse config: %w", err)
 	}
 
-	if len(os.Args) != 2 {
+	if len(os.Args) < 2 {
 		return errInvalidArgument
 	}
 
@@ -46,28 +47,50 @@ func run(ctx context.Context) error {
 	taskCtx, stop := chromedp.NewContext(allocatorCtx, chromedp.WithLogf(log.Printf))
 	defer stop()
 
-	var tasks chromedp.Tasks
-	tasks = append(tasks, setGeolocation(cfg.Latitude, cfg.Longitude))
-	tasks = append(tasks, signIn(cfg.TalentaEmail, cfg.TalentaPassword))
+	var finalAction chromedp.Tasks
 	switch os.Args[1] {
 	case "clock-in":
-		tasks = append(tasks, clockIn())
+		finalAction = clockIn()
 	case "clock-out":
-		tasks = append(tasks, clockOut())
+		finalAction = clockOut()
 	case "check":
 	default:
 		return errInvalidArgument
 	}
 
-	return chromedp.Run(taskCtx, tasks)
+	var todayNodeStyle string
+	if err := chromedp.Run(
+		taskCtx,
+		setGeolocation(cfg.Latitude, cfg.Longitude),
+		signIn(cfg.TalentaEmail, cfg.TalentaPassword),
+		getTodayNodeStyle(&todayNodeStyle),
+	); err != nil {
+		return fmt.Errorf("sign in & get today node style: %w", err)
+	}
+
+	if strings.Contains(todayNodeStyle, "red") {
+		log.Printf("today is a holiday, skipping clock in/out")
+		return nil
+	}
+
+	log.Printf("today is not a holiday, clocking in/out")
+	if err := chromedp.Run(taskCtx, finalAction); err != nil {
+		return fmt.Errorf("clock in/out: %w", err)
+	}
+
+	return nil
 }
 
 func setGeolocation(latitude, longitude float64) chromedp.Tasks {
-	d := browser.PermissionDescriptor{
+	notification := browser.PermissionDescriptor{
+		Name: browser.PermissionTypeNotifications.String(),
+	}
+	geolocation := browser.PermissionDescriptor{
 		Name: browser.PermissionTypeGeolocation.String(),
 	}
 	return chromedp.Tasks{
-		browser.SetPermission(&d, browser.PermissionSettingGranted),
+		browser.SetPermission(&notification, browser.PermissionSettingGranted),
+		browser.SetPermission(&geolocation, browser.PermissionSettingGranted),
 		emulation.SetGeolocationOverride().
 			WithAccuracy(100).
 			WithLatitude(latitude).
@@ -103,5 +126,14 @@ func clockOut() chromedp.Tasks {
 	return chromedp.Tasks{
 		openLiveAttendancePage(),
 		chromedp.Click(`//span[text()="Clock Out"]`),
+	}
+}
+
+// getTodayNodeStyle gets the style attribute of the node that represents today.
+// The style attribute will be used to determine if today is a holiday.
+func getTodayNodeStyle(today *string) chromedp.Tasks {
+	return chromedp.Tasks{
+		chromedp.Navigate(talentaBaseURL + "/employee/company-calendar"),
+		chromedp.AttributeValue(`//td[contains(@class, "fc-today")]/span`, "style", today, nil),
 	}
 }
