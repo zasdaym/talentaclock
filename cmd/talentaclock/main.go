@@ -81,7 +81,7 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("parse last time off date: %w", err)
 	}
 	if lastTimeOff.Format("2006-01-02") == time.Now().Format("2006-01-02") {
-		log.Printf("last time off is today, skipping clock in/out")
+		log.Printf("today is time off, skipping clock in/out")
 		return nil
 	}
 
