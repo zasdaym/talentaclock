@@ -14,6 +14,7 @@ jobs:
         go-version: 1.19.1
     - run: go run ./cmd/talentaclock check
       env:
+        TZ: Asia/Jakarta
         TALENTA_EMAIL: ${{ secrets.TALENTA_EMAIL }}
         TALENTA_PASSWORD: ${{ secrets.TALENTA_PASSWORD }}
         LATITUDE: ${{ secrets.LATITUDE }}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"time"
 
 	"github.com/chromedp/cdproto/browser"
 	"github.com/chromedp/cdproto/emulation"
@@ -59,13 +60,15 @@ func run(ctx context.Context) error {
 	}
 
 	var todayNodeStyle string
+	var lastTimeOffText string
 	if err := chromedp.Run(
 		taskCtx,
 		setGeolocation(cfg.Latitude, cfg.Longitude),
 		signIn(cfg.TalentaEmail, cfg.TalentaPassword),
 		getTodayNodeStyle(&todayNodeStyle),
+		getLastTimeOffText(&lastTimeOffText),
 	); err != nil {
-		return fmt.Errorf("sign in & get today node style: %w", err)
+		return fmt.Errorf("sign in & initial check: %w", err)
 	}
 
 	if strings.Contains(todayNodeStyle, "red") {
@@ -73,7 +76,16 @@ func run(ctx context.Context) error {
 		return nil
 	}
 
-	log.Printf("today is not a holiday, clocking in/out")
+	lastTimeOff, err := time.Parse("2006-01-02", lastTimeOffText)
+	if err != nil {
+		return fmt.Errorf("parse last time off date: %w", err)
+	}
+	if lastTimeOff.Format("2006-01-02") == time.Now().Format("2006-01-02") {
+		log.Printf("last time off is today, skipping clock in/out")
+		return nil
+	}
+
+	log.Printf("clocking in/out")
 	if err := chromedp.Run(taskCtx, finalAction); err != nil {
 		return fmt.Errorf("clock in/out: %w", err)
 	}
@@ -135,5 +147,12 @@ func getTodayNodeStyle(today *string) chromedp.Tasks {
 	return chromedp.Tasks{
 		chromedp.Navigate(talentaBaseURL + "/employee/company-calendar"),
 		chromedp.AttributeValue(`//td[contains(@class, "fc-today")]/span`, "style", today, nil),
+	}
+}
+
+func getLastTimeOffText(timeOff *string) chromedp.Tasks {
+	return chromedp.Tasks{
+		chromedp.Navigate(talentaBaseURL + "/my-info/time-off"),
+		chromedp.Text(`//tr/td[@class="sorting_1"]`, timeOff),
 	}
 }
