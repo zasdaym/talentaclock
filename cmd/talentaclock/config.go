@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/itzg/go-flagsfiller"
+	"github.com/joho/godotenv"
 )
 
 type config struct {
@@ -15,6 +16,7 @@ type config struct {
 }
 
 func parseConfig() (config, error) {
+	godotenv.Load()
 	var cfg config
 	if err := flagsfiller.Parse(&cfg, flagsfiller.WithEnv("")); err != nil {
 		return cfg, fmt.Errorf("parse flag and env: %w", err)

@@ -6,6 +6,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20221011223153-490dc4d81f7c
 	github.com/chromedp/chromedp v0.8.6
 	github.com/itzg/go-flagsfiller v1.9.1
+	github.com/joho/godotenv v1.4.0
 )
 
 require (
