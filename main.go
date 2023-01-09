@@ -85,7 +85,6 @@ func run(ctx context.Context) error {
 		return nil
 	}
 
-	log.Printf("clocking in/out")
 	if err := chromedp.Run(taskCtx, finalAction); err != nil {
 		return fmt.Errorf("clock in/out: %w", err)
 	}
