@@ -130,6 +130,7 @@ func clockIn() chromedp.Tasks {
 	return chromedp.Tasks{
 		openLiveAttendancePage(),
 		chromedp.Click(`//span[text()="Clock In"]`),
+		chromedp.Sleep(3 * time.Second),
 	}
 }
 
@@ -137,6 +138,7 @@ func clockOut() chromedp.Tasks {
 	return chromedp.Tasks{
 		openLiveAttendancePage(),
 		chromedp.Click(`//span[text()="Clock Out"]`),
+		chromedp.Sleep(3 * time.Second),
 	}
 }
 
