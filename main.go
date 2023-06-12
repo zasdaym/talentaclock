@@ -25,15 +25,15 @@ func main() {
 
 const talentaBaseURL = "https://hr.talenta.co"
 
-var errInvalidArgument = fmt.Errorf("expected one argument: clock-in or clock-out")
+var errInvalidArgument = fmt.Errorf("expected one argument: clock-in, clock-out, or check")
 
 func run(ctx context.Context) error {
 	cfg, err := parseConfig()
 	if err != nil {
-		return fmt.Errorf("parse config: %w", err)
+		return err
 	}
 
-	if len(os.Args) < 2 {
+	if len(os.Args) != 2 {
 		return errInvalidArgument
 	}
 
@@ -69,6 +69,12 @@ func run(ctx context.Context) error {
 		getLastTimeOffText(&lastTimeOffText),
 	); err != nil {
 		return fmt.Errorf("sign in & initial check: %w", err)
+	}
+
+	weekday := time.Now().Weekday()
+	if weekday == time.Saturday || weekday == time.Sunday {
+		log.Printf("today is %s, skipping clock in/out", weekday)
+		return nil
 	}
 
 	if strings.Contains(todayNodeStyle, "red") {
